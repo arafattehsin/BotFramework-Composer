@@ -6,7 +6,7 @@ import { has, get } from 'lodash';
 
 import { NodeEventTypes } from '../constants/NodeEventTypes';
 import { KeyboardCommandTypes, KeyboardPrimaryTypes } from '../constants/KeyboardCommandTypes';
-import { AttrNames } from '../constants/ElementAttributes';
+import { AttrNames, AbstractSelectorElement } from '../constants/ElementAttributes';
 import { NodeRendererContext } from '../store/NodeRendererContext';
 import { SelectionContext, SelectionContextData } from '../store/SelectionContext';
 import { ClipboardContext } from '../store/ClipboardContext';
@@ -230,10 +230,14 @@ export const ObiEditor: FC<ObiEditorProps> = ({
     },
   });
 
-  const querySelectableElements = (): NodeListOf<HTMLElement> => {
-    return document.querySelectorAll(`[${AttrNames.SelectableElement}]`);
+  const querySelectableElements = (): AbstractSelectorElement[] => {
+    const items: AbstractSelectorElement[] = [];
+    Array.from(document.querySelectorAll(`[${AttrNames.SelectableElement}]`)).forEach(ele => {
+      items.push(new AbstractSelectorElement(ele as HTMLElement));
+    });
+    return items;
   };
-  const [selectableElements, setSelectableElements] = useState<NodeListOf<HTMLElement>>(querySelectableElements());
+  const [selectableElements, setSelectableElements] = useState<AbstractSelectorElement[]>(querySelectableElements());
 
   const getClipboardTargetsFromContext = (): string[] => {
     const selectedActionIds = normalizeSelection(selectionContext.selectedIds);
@@ -285,6 +289,9 @@ export const ObiEditor: FC<ObiEditorProps> = ({
           selectedIds: [selected as string],
         });
         focused && onFocusSteps([focused], tab);
+
+        document.querySelector(`[${AttrNames.SelectedId}=${selected}]`) &&
+          (document.querySelector(`[${AttrNames.SelectedId}=${selected}]`) as Element).scrollIntoView(true);
         break;
       }
       case KeyboardPrimaryTypes.Operation: {
